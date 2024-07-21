@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="jp">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>さばばゲーム デラックス</title>
+    <script src="https://unpkg.com/react@17/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        /* フォントの設定 */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap');
+
+        /* 画面全体に適用するスタイル */
+        body {
+            font-family: 'Poppins', sans-serif; /* フォントファミリー */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* 背景色 */
+            margin: 0; /* マージン */
+            padding: 20px; /* 内側の余白 */
+            display: flex; /* フレックスボックス */
+            justify-content: center; /* 中央揃え */
+            align-items: center; /* 中央揃え */
+            min-height: 100vh; /* 最小の高さ */
+            color: #fff; /* テキスト色 */
+        }
+
+        /* ゲームコンテナのスタイル */
+        .game-container {
+            background-color: rgba(255, 255, 255, 0.1); /* 背景色 */
+            border-radius: 20px; /* 角丸 */
+            padding: 30px; /* 内側の余白 */
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37); /* ボックスシャドウ */
+            backdrop-filter: blur(4px); /* 背景フィルタ */
+            border: 1px solid rgba(255, 255, 255, 0.18); /* 境界線 */
+            max-width: 800px; /* 最大幅 */
+            width: 100%; /* 幅 */
+        }
+
+        /* 見出しのスタイル */
+        h1 {
+            text-align: center; /* テキストの中央揃え */
+            color: #ffd700; /* テキスト色 */
+            font-size: 3rem; /* フォントサイズ */
+            margin-bottom: 30px; /* 下のマージン */
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* テキストシャドウ */
+        }
+
+        /* 情報のスタイル */
+        .info {
+            display: flex; /* フレックスボックス */
+            justify-content: space-between; /* スペースを均等に配置 */
+            margin-bottom: 20px; /* 下のマージン */
+            font-size: 1.2rem; /* フォントサイズ */
+        }
+
+        /* サイコロコンテナのスタイル */
+        .dice-container {
+            display: flex; /* フレックスボックス */
+            justify-content: center; /* 中央揃え */
+            margin-bottom: 30px; /* 下のマージン */
+        }
+
+        /* サイコロのスタイル */
+        .dice {
+            width: 80px; /* 幅 */
+            height: 80px; /* 高さ */
+            margin: 0 15px; /* マージン */
+            background-color: #fff; /* 背景色 */
+            border: 2px solid #ffd700; /* 境界線 */
+            border-radius: 15px; /* 角丸 */
+            display: flex; /* フレックスボックス */
+            justify-content: center; /* 中央揃え */
+            align-items: center; /* 中央揃え */
+            font-size: 2.5rem; /* フォントサイズ */
+            font-weight: bold; /* 太文字 */
+            color: #333; /* テキスト色 */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* ボックスシャドウ */
+            transition: all 0.3s ease; /* トランジション */
+        }
+
+        /* サイコロホバースタイル */
+        .dice:hover {
+            transform: translateY(-5px) rotate(10deg); /* トランスフォーム */
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15); /* ボックスシャドウ */
+        }
+
+        /* 赤いサイコロのスタイル */
+        .red { background-color: #ff6b6b; color: #fff; }
+
+        /* 紫のサイコロのスタイル */
+        .purple { background-color: #cc99ff; color: #4b0082; }
+
+        /* 結果のスタイル */
+        .result {
+            font-size: 2rem; /* フォントサイズ */
+            font-weight: bold; /* 太文字 */
+            text-align: center; /* テキストの中央揃え */
+            margin-bottom: 30px; /* 下のマージン */
+            color: #ffd700; /* テキスト色 */
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* テキストシャドウ */
+        }
+
+        /* アニメーションのスタイル */
+        .sababa { animation: sababaAnimation 1.5s infinite; }
+        .sababa-special { animation: sababaSpecialAnimation 0.15s infinite; }
+        .tenmetu { animation: tenmetu 0.15s infinite; }
+
+        /* サババアニメーション */
+        @keyframes sababaAnimation {
+            0% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(5deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        /* サババ特別アニメーション */
+        @keyframes sababaSpecialAnimation {
+            0% { transform: scale(1.1) rotate(-5deg); opacity: 0.5; }
+            50% { transform: scale(1.2) rotate(5deg); opacity: 1; }
+            100% { transform: scale(1.1) rotate(-5deg); opacity: 0.5; }
+        }
+
+        /* 点滅アニメーション */
+        @keyframes tenmetu {
+            0% { opacity: 0.5; transform: scale(0.95); }
+            50% { opacity: 1; transform: scale(1.05); }
+            100% { opacity: 0.5; transform: scale(0.95); }
+        }
+
+        /* ボタンのスタイル */
+        button {
+            padding: 12px 24px; /* 内側の余白 */
+            font-size: 1.2rem; /* フォントサイズ */
+            cursor: pointer; /* カーソル */
+            background-color: #ffd700; /* 背景色 */
+            color: #333; /* テキスト色 */
+            border: none; /* 境界線 */
+            border-radius: 50px; /* 角丸 */
+            transition: all 0.3s ease; /* トランジション */
+            margin: 10px; /* マージン */
+            font-weight: bold; /* 太文字 */
+            text-transform: uppercase; /* 大文字 */
+            letter-spacing: 1px; /* 文字間隔 */
+        }
+
+        /* ボタンホバースタイル */
+        button:hover {
+            background-color: #ffea00; /* 背景色 */
+            transform: translateY(-3px); /* トランスフォーム */
+            box-shadow: 0 6px 12px rgba(255, 215, 0, 0.3); /* ボックスシャドウ */
+        }
+
+        /* 無効なボタンのスタイル */
+        button:disabled {
+            background-color: #cccccc; /* 背景色 */
+            cursor: not-allowed; /* カーソル */
+            transform: none; /* トランスフォーム */
+            box-shadow: none; /* ボックスシャドウ */
+        }
+
+        /* ゲームステートのスタイル */
+        .game-state {
+            background-color: rgba(255, 255, 255, 0.1); /* 背景色 */
+            border-radius: 15px; /* 角丸 */
+            padding: 20px; /* 内側の余白 */
+            margin-bottom: 30px; /* 下のマージン */
+            text-align: center; /* テキストの中央揃え */
+            width: 90%; /* 幅 */
+        }
+
+        /* ゲームステートの見出しスタイル */
+        .game-state h2 {
+            color: #ffd700; /* テキスト色 */
+            margin-bottom: 15px; /* 下のマージン */
+        }
+
+        /* ゲームステートのテキストスタイル */
+        .game-state p {
+            color: #fff; /* テキスト色 */
+            margin: 10px 0; /* マージン */
+            font-size: 1.2rem; /* フォントサイズ */
+        }
+
+        /* デバッグコンテナのスタイル */
+        .debug-container {
+            margin-top: 30px; /* 上のマージン */
+            padding-top: 20px; /* 上の内側の余白 */
+            border-top: 1px solid rgba(255, 255, 255, 0.3); /* 境界線 */
+        }
+
+        /* デバッグボタンのスタイル */
+        .debug-container button {
+            margin: 5px; /* マージン */
+            padding: 8px 16px; /* 内側の余白 */
+            font-size: 0.9rem; /* フォントサイズ */
+            background-color: rgba(255, 255, 255, 0.2); /* 背景色 */
+            color: #fff; /* テキスト色 */
+        }
+
+        /* サイコロと結果のスタイル */
+        .dice-and-result {
+            display: flex; /* フレックスボックス */
+            flex-direction: column; /* 縦方向 */
+            align-items: center; /* 中央揃え */
+            margin-bottom: 20px; /* 下のマージン */
+        }
+
+        /* ボタンコンテナのスタイル */
+        .button-container {
+            width: 100%; /* 幅 */
+            display: flex; /* フレックスボックス */
+            justify-content: center; /* 中央揃え */
+            margin-top: 20px; /* 上のマージン */
+        }
+        
+        /*プログレッシブバー*/
+        .progress-bar {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        .progress-bar-fill {
+            height: 20px;
+            border-radius: 10px;
+            transition: width 0.5s ease-in-out;
+            
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel"> // text/babelのスクリプト開始
+        // ReactのuseStateとuseEffectを定義
+        const { useState, useEffect } = React;
+
+        // サイコロを振る関数
+        const rollDice = () => Math.floor(Math.random() * 6) + 3;
+
+        // サイコロの結果を評価する関数
+        const evaluateResult = (dice) => {
+            if (dice[0] === 3 && dice[1] === 8 && dice[2] === 8) return 'sababa';
+            if (dice[0] === dice[1] && dice[1] === dice[2]) return 'zoro';
+            if (dice.reduce((acc, curr) => acc + curr, 0) <= 14) return 'u14';
+            return 'lost';
+        };
+
+        // アプリコンポーネント
+        const App = () => {
+            // useStateフックを使用して状態を管理
+            const [dice, setDice] = useState([3, 8, 8]); // サイコロの出目
+            const [result, setResult] = useState(''); // サイコロの結果
+            const [clickCount, setClickCount] = useState(4); // クリック回数
+            const [specialRole, setSpecialRole] = useState(null); // 特別な役割
+            const [totalPlays, setTotalPlays] = useState(0); // 総プレイ回数
+            const [gameCurrency, setGameCurrency] = useState(100); // ゲーム通貨
+            const [debugFlag, setDebugFlag] = useState(''); // デバッグフラグ
+
+            const [gameState, setGameState] = useState('Normal'); // ゲームの状態
+            const [chanceData, setChanceData] = useState({ // さばばチャンスのデータ
+                remainingGames: 0, // 残りゲーム数
+                sababaStep: 0 // さばばステップ
+            });
+            const [rushData, setRushData] = useState({ // さばばラッシュのデータ
+                remainingGames: 0, // 残りゲーム数
+                sababaStock: 0 // さばばストック
+            });
+            const [getCurrency, setGetCurrency] = useState(0); // 獲得通貨量
+            
+            const [pendingBonus, setPendingBonus] = useState(0); // 保留中のボーナス
+
+            // useEffectを使用してキーボードイベントを処理
+            useEffect(() => {
+                const handleKeyPress = (event) => {
+                    if (event.code === 'Space') {
+                        if (clickCount < 3) {
+                            handleRevealDice();
+                        } else {
+                            handleRollDice();
+                        }
+                    }
+                };
+
+                window.addEventListener('keydown', handleKeyPress);
+                return () => {
+                    window.removeEventListener('keydown', handleKeyPress);
+                };
+            }, [clickCount]);
+
+            // モーダル関連の状態とコンポーネント
+            const [modalMessage, setModalMessage] = useState('');
+            const [showModal, setShowModal] = useState(false);
+
+            // モーダルコンポーネント
+            const Modal = ({ message }) => (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 1000
+                }}>
+                    <div style={{ // モーダル内のスタイル
+                        backgroundColor: 'white',
+                        padding: '30px',
+                        borderRadius: '15px',
+                        fontSize: '28px',
+                        fontWeight: 'bold',
+                        color: '#333',
+                        textAlign: 'center',
+                        boxShadow: '0 0 20px rgba(255, 215, 0, 0.5)',
+                        animation: `${message.animation || 'scale 0.5s ease-in-out'}`, // アニメーション
+                        ...message.style
+                    }}>
+                        {message.text}
+                    </div>
+                </div>
+            );
+
+            // モーダルメッセージを表示する関数
+            const showModalMessage = (message, duration = 1000, style = {}, animation = '') => {
+                setModalMessage({ text: message, style, animation });
+                setShowModal(true);
+                setTimeout(() => {
+                    setShowModal(false);
+                }, duration);
+            };
+
+            // サイコロを公開する処理
+            const handleRevealDice = () => {
+                setClickCount(prevCount => {
+                    const newCount = prevCount + 1;
+                    if (newCount === 3) {
+                        if (gameState === 'Rush') {
+                            setRushData(prev => {
+                                const newRemainingGames = prev.remainingGames + pendingBonus;
+                                if (pendingBonus > 0) {
+                                    if (pendingBonus >= 100) {
+                                        showModalMessage(
+                                            `+${pendingBonus}G`,
+                                            1000,
+                                            { color: 'gold', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' },
+                                            'scale 0.5s ease-in-out infinite alternate'
+                                        );
+                                    } else {
+                                        showModalMessage(
+                                            `+${pendingBonus}G`,
+                                            1000,
+                                            { color: 'blue' }
+                                        );
+                                    }
+                                }
+                                return {
+                                    ...prev,
+                                    remainingGames: newRemainingGames
+                                };
+                            });
+                            if (rushData.remainingGames <= 0) {
+                                if (rushData.sababaStock > 0) {
+                                    rushData.sababaStock--;
+                                    showModalMessage("まだまだ続くよ！！");
+                                    rushData.remainingGames = 50;
+                                } else {
+                                    setGameState('pChance');
+                                }
+                            }
+                        } else if (gameState === 'Chance') {
+                            setChanceData(prev => {
+                                const newChanceData = {
+                                    ...prev,
+                                    remainingGames: result === 'lost' ? prev.remainingGames : 4,
+                                    sababaStep: prev.sababaStep + pendingBonus
+                                };
+
+                                if (newChanceData.sababaStep >= 10) {
+                                    setGameState('pRush');
+                                } else if (newChanceData.remainingGames <= 0) {
+                                    const successRate = calculateSababaChanceSuccessRate(newChanceData.sababaStep);
+                                    if (Math.random() * 100 < successRate) {
+                                        newChanceData.sababaStep = 10;
+                                        setGameState('pRush');
+                                    } else {
+                                        setGameState('Normal');
+                                    }
+                                }
+
+                                return newChanceData;
+                            });
+                        }
+                        if (result === 'u14') {
+                            setGameCurrency(prevCurrency => prevCurrency + 9);
+                            
+                            if (gameState === 'Normal' && Math.random() < 0.5) {
+                                setGameCurrency(prevCurrency => prevCurrency - 6);
+                            }
+                            
+                            if (gameState === 'Rush' && Math.random() < 0.2) {
+                                setGameCurrency(prevCurrency => prevCurrency + 6);
+                            }
+                        }
+                    }
+                    return newCount;
+                });
+            };
+
+            // サイコロを振る処理
+            const handleRollDice = () => {
+                let newDice = [rollDice(), rollDice(), rollDice()];
+                if (debugFlag === 'sababa') {
+                    newDice = [3, 8, 8];
+                    setDebugFlag('');
+                } else if (debugFlag === 'zoro') {
+                    newDice = [6, 6, 6];
+                    setDebugFlag('');
+                } else if (debugFlag === 'u14') {
+                    newDice = [4, 5, 5];
+                    setDebugFlag('');
+                }
+
+                setDice(newDice);
+                let newResult = evaluateResult(newDice);
+                if (gameState === 'Rush' && newResult === "lost") {
+                    newDice[2] = 3;
+                    newResult = evaluateResult(newDice);
+                    if (newResult === 'zoro') newResult = 'u14';
+                }
+                console.log(newDice);
+                setResult(newResult);
+                setSpecialRole(newResult === 'sababa' || newResult === 'zoro' || newResult === 'u14' ? newResult : null);
+                setClickCount(0);
+                setTotalPlays(prevPlays => prevPlays + 1);
+                setGameCurrency(prevCurrency => prevCurrency - 3);
+                setPendingBonus(0);
+
+                switch (gameState) {
+                    case 'Normal':
+                        if (newResult === 'sababa') {
+                            setGameState('pChance');
+                        } else if (newResult === 'zoro' && Math.random() < 0.2) {
+                            setGameState('pChance');
+                        }
+                        setGetCurrency(0);
+                        break;
+                    case 'pChance':
+                        startSababaChance();
+                        handleSababaChanceResult(newResult);
+                        break;
+                    case 'Chance':
+                        handleSababaChanceResult(newResult);
+                        break;
+                    case 'Rush':
+                        handleSababaRushResult(newResult);
+                        break;
+                    case 'pRush':
+                        startSababaRush();
+                        handleSababaRushResult(newResult);
+                        break;
+                }
+            };
+
+            // さばばチャンスを開始する処理
+            const startSababaChance = () => {
+                setGameState('Chance');
+                showModalMessage("さばばチャンス突入！", 2000, { color: 'gold', fontSize: '36px' }, 'scale 0.5s ease-in-out');
+                setChanceData({ remainingGames: 4, sababaStep: 1 });
+            };
+
+            // さばばチャンスの結果を処理する関数
+            const handleSababaChanceResult = (result) => {
+                setChanceData(prevData => {
+                    let { remainingGames, sababaStep } = prevData;
+                    switch (result) {
+                        case 'lost':
+                            setPendingBonus(0);
+                            break;
+                        case 'u14':
+                            setPendingBonus(1);
+                            break;
+                        case 'zoro':
+                            setPendingBonus(3);
+                            break;
+                        case 'sababa':
+                            setPendingBonus(6);
+                            break;
+                    }
+                    remainingGames--;
+                    return { remainingGames, sababaStep };
+                });
+            };
+            //さばばステップの色
+            const getProgressColor = (step) => {
+                if (step <= 3) return '#0000cd'; // 青
+                if (step <= 6) return '#228b22'; // 緑
+                if (step <= 9) return '#dc143c'; // 赤
+                return '#c71585'; // 薄い青 (9以上の場合)
+            };
+
+            // さばばチャンスの成功率を計算する関数
+            const calculateSababaChanceSuccessRate = (sababaStep) => {
+                return Math.min(sababaStep * 10, 100);
+            };
+
+            // さばばラッシュを開始する処理
+            const startSababaRush = () => {
+                setGameState('Rush');
+                setRushData({ remainingGames: 50, sababaStock: 0});
+                if(getCurrency === 0){
+                    setGetCurrency(gameCurrency);
+                }
+                
+                showModalMessage("さばばラッシュ開始！", 2000, { color: 'gold', fontSize: '36px' }, 'scale 0.5s ease-in-out');
+            };
+
+            // さばばラッシュの結果を処理する関数
+            const handleSababaRushResult = (result) => {
+                setRushData(prevData => {
+                    let { remainingGames, sababaStock } = prevData;
+                    remainingGames--;
+
+                    switch (result) {
+                        case 'u14':
+                            break;
+                        case 'zoro':
+                            setPendingBonus(chooseRandomWithDistribution([10, 30, 50, 100], [67,22,10,1]));
+                            break;
+                        case 'sababa':
+                            setPendingBonus(chooseRandomWithDistribution([30, 50, 100, 200, 300], [57,30,10,2,1]));
+                            if (Math.random() < 0.2) {
+                                sababaStock++;
+                            }
+                            break;
+                    }
+
+                    return { remainingGames, sababaStock };
+                });
+            };
+
+            // 確率分布に基づいてランダムな値を選択する関数
+            const chooseRandomWithDistribution = (options, probabilities) => {
+                if (options.length !== probabilities.length) {
+                    throw new Error("オプションと確率の配列の長さが一致しません。");
+                }
+
+                const totalProbability = probabilities.reduce((sum, prob) => sum + prob, 0);
+                if (Math.abs(totalProbability - 100) > 0.001) {
+                    throw new Error("確率の合計が100%になっていません。");
+                }
+
+                const randomValue = Math.random() * 100;
+                let cumulativeProbability = 0;
+
+                for (let i = 0; i < options.length; i++) {
+                    cumulativeProbability += probabilities[i];
+                    if (randomValue < cumulativeProbability) {
+                        return options[i];
+                    }
+                }
+
+                return options[options.length - 1];
+            };
+
+            // デバッグ用のサイコロ設定関数
+            const handleDebugSetDice = (newFlag) => {
+                setDebugFlag(newFlag);
+            };
+
+            // サイコロのクラス名を決定する関数
+            const getDiceClassName = (index) => {
+                if (specialRole === 'zoro') {
+                    return clickCount === 3 ? 'dice red tenmetu' : 'dice red';
+                }
+                if (specialRole === 'sababa') {
+                    return clickCount === 3 ? 'dice purple sababa-special' : 'dice purple sababa';
+                }
+                if (specialRole === 'u14' && clickCount === 3) {
+                    return 'dice tenmetu';
+                }
+                return 'dice';
+            };
+
+            // サイコロ要素を生成する関数
+            const diceElements = (
+                <div className="dice-container">
+                    {[0, 1, 2].map((index) => (
+                        <div key={index} className={getDiceClassName(index)}>
+                            {clickCount > index ? dice[index] : '?'}
+                        </div>
+                    ))}
+                </div>
+            );
+
+            return (
+                <div className="game-container">
+                    {showModal && <Modal message={modalMessage} />}
+                    <h1>さばばゲーム</h1>
+                    <div className="info">
+                        <p>プレイ回数：{totalPlays}</p>
+                        <p className="game-currency">ゲーム内通貨：{gameCurrency}</p>
+                    </div>
+                    {gameState === 'Chance' && (
+                        <div className="game-state">
+                            <h2>さばばチャンス中!</h2>
+                            <div className="progress-bar">
+                                <div 
+                                    className="progress-bar-fill" 
+                                    style={{
+                                        width: `${(chanceData.sababaStep / 10) * 100}%`,
+                                        backgroundColor: getProgressColor(chanceData.sababaStep)
+                                    }}
+                                ></div>
+                            </div>
+                            <p>残り: {chanceData.remainingGames}G</p>
+                        </div>
+                    )}
+                    {gameState === 'pRush' && (
+                        <div className="game-state">
+                            <h2>さばばチャンス成功！！</h2>
+                            <div className="progress-bar">
+                                <div 
+                                    className="progress-bar-fill" 
+                                    style={{
+                                        width: `${(chanceData.sababaStep / 10) * 100}%`,
+                                        backgroundColor: getProgressColor(chanceData.sababaStep)
+                                    }}
+                                ></div>
+                            </div>
+                        </div>
+                    )}
+                    {gameState === 'Rush' && (
+                        <div className="game-state">
+                            <h2>さばばラッシュ中!</h2>
+                            <p></p>
+                            <p>残り: {rushData.remainingGames}G　獲得:{gameCurrency - getCurrency}</p>
+                        </div>
+                    )}
+                    
+                    {diceElements}
+                    <div className="result">
+                        <p></p>
+                    </div>
+
+                    <div>
+                        <button onClick={handleRevealDice} disabled={clickCount >= 3}>サイコロを明かす</button>
+                        <button onClick={handleRollDice} disabled={clickCount < 3}>サイコロを振る</button>
+                    </div>
+
+                    <div className="debug-container">
+                        <p>デバッグ用ボタン</p>
+                        <button onClick={() => handleDebugSetDice('sababa')}>さばば</button>
+                        <button onClick={() => handleDebugSetDice('zoro')}>ゾロ目</button>
+                        <button onClick={() => handleDebugSetDice('u14')}>14以下</button>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
